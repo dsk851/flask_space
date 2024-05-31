@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Associer un Nom à une Voix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 20px 30px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        label {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            background-color: #5cb85c;
+            color: white;
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #4cae4c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Associer un Nom à une Voix</h1>
+        <p>Aucune correspondance n'a été trouvée pour cette voix dans notre base de données.</p>
+        <form id="voiceForm" method="POST" action="/auth_voc">
+            <label for="voiceName">Veuillez entrer un nom pour cette voix :</label>
+            <input type="text" id="voiceName" name="voiceName" required>
+            <button type="submit">Soumettre</button>
+        </form>
+    </div>
+    <script>
+        // Redirection si nécessaire
+        var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+        socket.on('redirect', function(data) {
+            window.location.href = data.url;
+        });
+    </script>
+</body>
+</html>

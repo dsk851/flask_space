@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard</title>
+    <style>
+      body {
+        margin: none;
+        padding: none;
+        box-sizing: border-box;
+      }
+      
+      .top_panel,
+      .container {
+        display: flex;
+        flex-direction: row;
+      }
+      
+      .top_panel {
+        justify-content: space-between;
+      }
+      
+      .left_panel,
+      .right_panel {
+        border: solid;
+        flex: 1;
+        padding: 10px;
+        box-sizing: border-box;
+        margin: 5px;
+      }
+      
+      .users {
+        border: solid;
+        margin: 5px;
+        box-sizing: border-box;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top_panel">
+      <h1>Welcome user : {{ username }}</h1>
+      <button class="logout">Log-out</button>
+    </div>
+    <div class="container">
+      <div class="left_panel">
+        <div class="users">
+          <a href="/fetch_user"><button type="button" class="userlister"><h3>FETCH USERS</h3></button></a>
+          <div>
+            {% for user in user_list %}
+                <a href="">{{user}}</a>            
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="right_panel">
+        <h2>Conversation</h2>
+        <div class="conversation"></div>
+      </div>
+    </div>
+  </body>
+</html>

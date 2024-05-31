@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Register</title>
+    <style>
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f0f0f0;
+      }
+      
+      .Register-box {
+        width: 300px;
+        padding: 20px;
+        background-color: #fff;
+        border-radius: 20px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      
+      h1 {
+        text-align: center;
+      }
+      
+      label {
+        display: block;
+        margin-bottom: 10px;
+      }
+      
+      input[type='text'],
+      input[type='password'] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 20px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      
+      button {
+
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 20px;
+        cursor: pointer;
+      }
+      
+      button:hover {
+        background-color: #0056b3;
+      }
+      
+      p {
+        text-align: center;
+        margin-top: 20px;
+      }
+      
+      a {
+        color: #007bff;
+        text-decoration: none;
+      }
+      
+      a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="Register-box">
+      <h1>Register</h1>
+      <form action="register    " method="post">
+        <label for="username">Username:</label>
+        <input type="text" name="username" required />
+        <label for="password">Password:</label>
+        <input type="password" name="password" required />
+        <button type="submit" value="Register" >Register</button>
+
+        <!-- Bouton pour passer en mode Sign Up -->
+        <p>Have an account already ?
+          <a href="login">Log in</a>
+        </p>
+        <a href="home">home</a>
+      </form>
+    </div>
+  </body>
+</html>

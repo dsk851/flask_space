@@ -1,0 +1,230 @@
+body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+}
+
+#messages {
+    box-sizing: border-box;
+    list-style-type: none;
+    padding: 0;
+}
+
+.message {
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.message.sent {
+    width: fit-content;
+    max-width: 60%;
+    background-color: rgb(0, 140, 175);
+    color: #fff;
+    text-align: left;
+    border-radius: 40px;
+    margin-left: auto;
+    box-sizing: border-box;
+    padding: 20px;
+}
+
+
+.message.received {
+    width: max-content;
+    max-width: 60%;
+    width: fit-content;
+    background-color: #f1f0f0;
+    color: #000;
+    text-align: left;
+    border-radius: 20px;
+    box-sizing: border-box;
+}
+
+.row {
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    align-items: center;
+    /* border: solid yellowgreen; */
+    padding: 0;
+    width: 100%;
+}
+
+.audio_sent {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.audio_received {
+    display: block;
+    margin-left: 0;
+    margin-right: auto;
+}
+
+.container {
+    width: 100%;
+    /* border: solid red; */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    /* Centrage vertical */
+}
+
+/* .col-md-8 {
+    width: auto;
+    border: solid black; /* Ajustement de la largeur */
+/* } */
+
+*/ #messages {
+    display: block;
+    list-style-type: none;
+    padding: 0;
+    width: 10%;
+}
+.avmessage
+{
+    /* border: solid yellow; */
+    width: 70%;
+}
+#form {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    width: 100%;
+    margin-top: 20px;
+    /* border: solid rgb(251, 255, 32); */
+    align-items: center;
+    margin: auto;
+}
+
+/* 
+.input-group {
+    display: flex;
+    align-items: center;
+} */
+
+#message_input {
+    flex: 1;
+    /* Pour occuper tout l'espace disponible */
+    border-radius: 20px;
+    margin-right: 10px;
+
+    #recButton,
+    #send {
+        border-radius: 20px;
+        height: 40px;
+        /* Hauteur des boutons */
+    }
+
+
+
+    /* form{
+    width: 100%;
+    border: solid yellow;
+    box-sizing: border-box;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+} */
+
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        /* Pour centrer verticalement */
+    }
+
+    /* .col-md-8 {
+    width: auto; /* Pour que la largeur s'adapte au contenu */
+}
+
+*/ #message_input {
+    width: auto;
+    margin-right: 10px;
+    border-radius: 20px;
+}
+
+
+#send {
+    border-radius: 20px;
+    background-color: rgb(0, 140, 175);
+    box-sizing: border-box;
+    margin-left: 10px;
+}
+
+#send::cli {
+    background-color: rgb(3, 110, 137);
+}
+
+.input-group {
+    display: flex;
+    width: 90%;
+    /* border: solid red; */
+    flex-direction: row;
+    justify-content: center;
+    align-self: center;
+}
+
+.group {
+    width: 100%;
+    border-radius: 40px;
+    /* background-color: rgb(243, 243, 226); */
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#recButton {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    background-color: rgb(0, 140, 175);
+    border: 1px solid rgb(0, 140, 175);
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    /* margin-left: 0px 0px 0px 5px; */
+}
+
+
+.notRec {
+    margin-top: auto;
+    margin-bottom: auto;
+    background-color: rgb(0, 140, 175);
+}
+
+.Rec {
+    margin-top: auto;
+    margin-bottom: auto;
+    animation-name: pulse;
+    animation-duration: 1.5s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    outline: none;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0px 0px 5px 0px rgba(0, 100, 125, 0.2);
+    }
+
+    65% {
+        box-shadow: 0px 0px 5px 13px rgba(0, 100, 125, 0.2);
+    }
+
+    90% {
+        box-shadow: 0px 0px 5px 13px rgba(0, 100, 125, 0);
+    }
+}
+
+#audioPlayer{
+    margin: 10px;
+}

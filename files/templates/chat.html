@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Chat</title>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io@2.3.0/dist/socket.io.js"></script>
+<script>
+      var socket = io();
+      socket.on('users', function(users) {
+        document.getElementById('users').innerHTML = '';
+        users.forEach(function(user) {
+          var userElement = document.createElement('li');
+          userElement.textContent = user;
+          userElement.onclick = function() {
+            socket.emit('private_message', { recipient: user, message: 'Hello!' });
+          };
+          document.getElementById('users').appendChild(userElement);
+        });
+      });
+    </script>
+</head>
+<body>
+    <h1>Chat</h1>
+    <div id="users"></div>
+    <hr>
+    <div id="messages"></div>
+    <form id="message-form">
+        <input type="hidden" id="recipient" value="{{ recipient }}">
+        <input type="text" id="message" placeholder="Type your message here...">
+        <button type="submit">Send</button>
+    </form>
+    <script>
+      socket.on('message', function(data) {
+        var messagesElement = document.getElementById('messages');
+        var messageElement = document.createElement('div');
+        messageElement.textContent = data.sender + ': ' + data.message;
+        messagesElement.appendChild(messageElement);
+      });
+
+      document.getElementById('message-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        var recipient = document.getElementById('recipient').value;
+        var message = document.getElementById('message').value;
+        socket.emit('private_message', { recipient: recipient, message: message });
+        document.getElementById('message').value = '';
+      });
+    </script>
+</body>
+</html>

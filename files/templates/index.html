@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KYRUA APP</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../static/style.css" />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <div class="row">
+        <div class="avmessage">
+          <ul id="messages" class="p-3"></ul>
+          <form id="form">
+            <div class="group">
+                <audio id="audio_test"></audio>
+              <div class="input-group">
+                <input type="text" id="message_input" class="form-control" placeholder="Message" aria-label="Type a message" aria-describedby="basic-addon2" />
+                <input type="button" class="notRec" id="recButton" type="button" />
+                <button class="btn btn-primary" type="submit" id="send">Send</button>
+                <div class="input-group-append"></div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+
+    <script>
+      let mediaRecorder
+      let chunks = []
+      let isRecording = false
+      let blob = null
+      var recButton = document.getElementById('recButton')
+      var audioPlayer = document.getElementById('audioPlayer')
+      
+      recButton.addEventListener('click', toggleRecording)
+      
+      async function toggleRecording() {
+        if (!isRecording) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            startRecording(stream)
+            isRecording = true
+            recButton.classList.remove('notRec')
+            recButton.classList.add('Rec')
+          } catch (error) {
+            console.error("Erreur lors de l'accès au microphone:", error)
+          }
+        } else {
+          stopRecording()
+          isRecording = false
+          recButton.classList.remove('Rec')
+          recButton.classList.add('notRec')
+        }
+      }
+      
+      function startRecording(stream) {
+        chunks = []
+        const mimeType = 'audio/webm'
+        mediaRecorder = new MediaRecorder(stream, { mimeType })
+        mediaRecorder.ondataavailable = function (e) {
+          chunks.push(e.data)
+        }
+      
+        mediaRecorder.onstop = function () {
+          let audio = document.createElement('audio')
+          audio.controls = true
+          audio.id = 'audioPlayer'
+          var form = document.getElementById('form')
+          form.insertBefore(audio, form.firstChild)
+          blob = new Blob(chunks, { type: 'audio/webm' })
+          audio.src = URL.createObjectURL(blob)
+        }
+        mediaRecorder.start()
+      }
+      
+      function stopRecording() {
+        mediaRecorder.stop()
+      }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+
+    var socket = io();
+
+    var form = document.getElementById('form');
+    var input = document.getElementById('message_input');
+    
+function base64toBlob(base64String, contentType = '') {
+    const byteCharacters = atob(base64String);
+    const byteArrays = [];
+
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteArrays.push(byteCharacters.charCodeAt(i));
+    }
+
+    const byteArray = new Uint8Array(byteArrays);
+    return new Blob([byteArray], { type: contentType });
+}
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var message = input.value.trim();
+        if (message !== '' || blob) {
+            if (message !== '') {
+                socket.emit('message', {
+                    username: '{{ session['username'] }}',
+                    message: message,
+                    socket_id: socket.id 
+                });
+            } 
+            if (blob) {
+                socket.emit('message', {
+                    username: '{{ session['username'] }}',
+                    audio: blob,
+                    socket_id: socket.id 
+                });
+                blob = null;
+            }
+                var audioElement = document.getElementById('audioPlayer');
+            if (audioElement) {
+                audioElement.parentNode.removeChild(audioElement);
+            }
+            }
+            input.value = '';
+        }
+    );
+      
+
+    socket.on('message', function (data) {
+        applyMessageContainerStyles();
+    
+        var item = document.createElement('li');
+    
+        if (data.socket_id === socket.id) {
+            createSentMessage(item, data.message, data.text, data.audio_base64);
+        } else {
+            createReceivedMessage(item, data.username, data.message, data.text, data.audio_base64);
+        }
+    
+        if (data.audio) {
+            createAudioElement(item, data.audio, data.socket_id === socket.id ? 'sent' : 'received');
+        }
+    
+        document.getElementById('messages').appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+    
+    function applyMessageContainerStyles() {
+        var messagesContainer = document.getElementById('messages');
+        if (!messagesContainer.style.border) {
+            messagesContainer.style.border = '1px solid #ccc';
+            messagesContainer.style.borderRadius = '40px';
+        }
+    }
+    
+    function createSentMessage(item, message, text, audioBase64) {
+        item.classList.add('message', 'sent');
+    
+        if (message) {
+            var messageText = document.createElement('p');
+            messageText.textContent = '[ vous ] ' + message;
+            item.appendChild(messageText);
+        } else {
+            var textText = document.createElement('p');
+            textText.textContent = '[ vous ] ' + text;
+            item.appendChild(textText);
+        }
+    
+        if (audioBase64) {
+            createAudioElement(item, audioBase64, 'sent');
+        }
+    }
+    
+    function createReceivedMessage(item, username, message, text, audioBase64) {
+        item.classList.add('message', 'received');
+    
+        if (message) {
+            var messageText = document.createElement('p');
+            messageText.textContent = '[ ' + username + ' ] ' + message;
+            item.appendChild(messageText);
+        } else {
+            var textText = document.createElement('p');
+            textText.textContent = '[ ' + username + ' ] ' + text;
+            item.appendChild(textText);
+        }
+    
+        if (audioBase64) {
+            createAudioElement(item, audioBase64, 'received');
+        }
+    }
+    
+    function createAudioElement(item, audioBase64, messageType) {
+        var audio = document.createElement('audio');
+        audio.controls = true;
+    
+        if (messageType === 'sent') {
+            audio.classList.add('audio_sent_mess');
+        } else {
+            audio.classList.add('audio_received');
+        }
+    
+        var audioBlob = new Blob([audioBase64], { type: 'audio/webm' });
+        var audioUrl = URL.createObjectURL(audioBlob);
+    
+        audio.src = audioUrl;
+        audio.style.maxWidth = '100%';
+    
+        item.appendChild(audio);
+    }
+    
+    
+    
+  </script>
+  </body>
+</html>

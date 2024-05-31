@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KYRUA APP</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="../static/style.css" />
+  </head>
+  <body>
+    <div class="container mt-5">
+      <div class="row">
+        <div class="avmessage">
+          <ul id="messages" class="p-3"></ul>
+          <form id="form">
+            <div class="group">
+              <div class="input-group">
+                <input type="text" id="message_input" class="form-control" placeholder="Message" aria-label="Type a message" aria-describedby="basic-addon2" />
+                <input type="button" class="notRec" id="recButton" type="button" />
+                <button class="btn btn-primary" type="submit" id="send">Send</button>
+                <div class="input-group-append"></div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.2.0/socket.io.js"></script>
+
+    <script>
+      let mediaRecorder
+      let chunks = []
+      let isRecording = false
+      let blob = null
+      var recButton = document.getElementById('recButton')
+      var audioPlayer = document.getElementById('audioPlayer')
+      
+      recButton.addEventListener('click', toggleRecording)
+      
+      async function toggleRecording() {
+        if (!isRecording) {
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+            startRecording(stream)
+            isRecording = true
+            recButton.classList.remove('notRec')
+            recButton.classList.add('Rec')
+          } catch (error) {
+            console.error("Erreur lors de l'accès au microphone:", error)
+          }
+        } else {
+          stopRecording()
+          isRecording = false
+          recButton.classList.remove('Rec')
+          recButton.classList.add('notRec')
+        }
+      }
+      
+      function startRecording(stream) {
+        const mimeType = 'audio/webm'
+        mediaRecorder = new MediaRecorder(stream, { mimeType })
+        mediaRecorder.ondataavailable = function (e) {
+          chunks.push(e.data)
+        }
+      
+        mediaRecorder.onstop = function () {
+          let audio = document.createElement('audio')
+          audio.controls = true
+          audio.id = 'audioPlayer'
+          var form = document.getElementById('form')
+          form.insertBefore(audio, form.firstChild)
+          blob = new Blob(chunks, { type: 'audio/webm' })
+          audio.src = URL.createObjectURL(blob)
+        }
+        mediaRecorder.start()
+      }
+      
+      function stopRecording() {
+        mediaRecorder.stop()
+      }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+
+    var socket = io();
+
+    var form = document.getElementById('form');
+    var input = document.getElementById('message_input');
+    
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var message = input.value.trim();
+        if (message !== '' || blob) {
+            if (message !== '') {
+                socket.emit('message', {
+                    username: '{{ session['username'] }}',
+                    message: message,
+                    socket_id: socket.id 
+                });
+            } 
+            if (blob) {
+                socket.emit('message', {
+                    username: '{{ session['username'] }}',
+                    audio: blob,
+                    socket_id: socket.id 
+                });
+                blob = null;
+            }
+                var audioElement = document.getElementById('audioPlayer');
+            if (audioElement) {
+                audioElement.parentNode.removeChild(audioElement);
+            }
+            }
+            input.value = '';
+        }
+    );
+      
+
+    socket.on('message', function (data) {
+        if (!document.getElementById('messages').style.border) {
+            document.getElementById('messages').style.border = '1px solid #ccc';
+            document.getElementById('messages').style.borderRadius = '40px';
+        }
+    
+        var item = document.createElement('li');
+        if (data.socket_id === socket.id) {
+            item.classList.add('message', 'sent');
+            if (data.message) {
+                item.textContent = '[ vous ] ' + data.message;
+            } else {
+                item.textContent = '[ vous ]';
+            }
+        } else {
+            item.classList.add('message', 'received');
+            if (data.message) {
+                item.textContent = '[ ' + data.username + ' ] ' + data.message;
+            } else {
+                item.textContent = '[ ' + data.username + ' ]';
+            }
+        }
+    
+        if (data.audio) {
+            var audio = document.createElement('audio');
+            audio.controls = true;
+            //audio.autoplay = true;
+            if (data.socket_id === socket.id) {
+                audio.classList.add('audio_sent');
+            } else {
+                audio.classList.add('audio_received');
+            }
+            var audioBlob = new Blob([data.audio], { type: 'audio/webm' });
+            var audioUrl = URL.createObjectURL(audioBlob);
+            audio.src = audioUrl;
+            audio.style.maxWidth = '100%'
+            item.appendChild(audio); 
+        }
+    
+        document.getElementById('messages').appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+    
+  </script>
+  </body>
+</html>
+
+
+
+
+from flask import Flask, render_template, request, redirect, url_for, session
+from flask_socketio import SocketIO
+import mysql.connector as con
+from typing import Dict
+import ffmpeg
+from io import BytesIO
+import speech_recognition as sr
+
+
+active_users: Dict[str, dict] = {}
+current_user = None
+user_list = []
+chat_id = None
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "your_secret_key"
+socketio = SocketIO(app, cors_allowed_origins="*")
+
+
+@socketio.on("connect")
+def handle_connect():
+    print(f"User connected")
+
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    print("User disconnected")
+
+
+db = con.connect(host="localhost", user="root", password="", database="ChatAppUserData")
+
+
+@app.route("/")
+@app.route("/home")
+def home():
+    return render_template("home.html")
+
+
+def blob_to_audio(blob):
+    # Crée un flux de mémoire pour stocker le blob
+    # blob_stream = blob.getvalue()
+
+    # Convertit le flux de mémoire en un format audio WAV
+    audio_stream, _ = (
+        ffmpeg.input("pipe:")
+        .output("pipe:", format="wav")
+        .run(input=blob, capture_stdout=True, capture_stderr=True)
+    )
+
+    return audio_stream
+
+
+def transcript(blob):
+    audio_wav = blob_to_audio(blob)
+    r = sr.Recognizer()
+
+    # Convertit l'audio WAV en un objet AudioData
+    audio_data = sr.AudioData(audio_wav, sample_rate=44100, sample_width=2)
+
+    # Utilise l'objet AudioData comme source audio pour la transcription
+    try:
+        text = r.recognize_google(audio_data, language="fr-FR")
+        print("Converting audio transcripts into text ...")
+        return text
+
+    except sr.UnknownValueError:
+        print("Google Speech Recognition could not understand audio")
+
+    except sr.RequestError as e:
+        print(
+            "Could not request results from Google Speech Recognition service; {0}".format(
+                e
+            )
+        )
+
+    except Exception as e:
+        print("Sorry.. run again due to error: ", str(e))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    global current_user
+    error = None
+    if request.method == "POST":
+        userinfos = request.form
+        username = userinfos["username"]
+        password = userinfos["password"]
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM User WHERE Name = %s", (username,))
+        user = cursor.fetchone()
+        cursor.close()
+        if user:
+            if user[2] == password:
+                current_user = username
+                session["username"] = username
+                return redirect("chat")
+            else:
+                error = "Invalid password. Please try again."
+                print(error)
+        else:
+            error = "Username does not exist. Please try again."
+            print(error)
+    return render_template("login.html", error=error)
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+    if request.method == "POST":
+        userinfos = request.form
+        username = dict(userinfos)
+        username = userinfos["username"]
+        password = userinfos["password"]
+        cursor = db.cursor()
+        cursor.execute("SELECT * FROM User WHERE Name = %s", (username,))
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+            error = "Username already exists. Please choose a different username."
+            print(error)
+        else:
+            try:
+                cursor.execute(
+                    "INSERT INTO User (Name, Password) VALUES (%s, %s)",
+                    (username, password),
+                )
+                db.commit()
+                return redirect(url_for("login"))
+            except Exception as e:
+                db.rollback()
+                error = "Error occurred during registration. Please try again."
+                print(e)
+            finally:
+                cursor.close()
+
+    return render_template("register.html", error=error)
+
+
+@app.route("/fetch_user", methods=["GET", "POST"])
+def fetch_users():
+    global user_list
+    file = open("users.txt", "r")
+    data = file.readlines()
+    user_list = data
+    return redirect("chat")
+
+
+# @app.route("update_cid/<string: chat_id>", methods=["GET", "POST"])
+# def update_cid():
+#     global chat_id
+#     chat_id
+
+
+@app.route("/dashboard", methods=["GET", "POST"])
+def dashboard():
+    global current_user, user_list, chat_id
+    return render_template(
+        "dashboard.html", username=current_user, user_list=user_list, chat_id=chat_id
+    )
+
+
+@app.route("/chat")
+def index():
+    return render_template("index.html")
+
+
+@socketio.on("message")
+def handle_message(data):
+    if "message" in data:
+        message = data["message"]
+        socket_id = data["socket_id"]
+        username = data["username"]
+        print(f"Message from {username} [{socket_id}] : {message}")
+        socketio.emit(
+            "message",
+            {"message": message, "socket_id": socket_id, "username": username},
+        )
+    elif "audio" in data:
+        audio = data["audio"]
+        socket_id = data["socket_id"]
+        username = session["username"]
+
+        text = transcript(audio)
+        print(f"Audio from {username} [{socket_id}] : {len(audio)} bytes")
+        print(f"Text transcrit : {text}")
+        print(type(data["audio"]))
+
+        socketio.emit(
+            "message",
+            {"audio": audio, "socket_id": socket_id, "username": username},
+        )
+
+
+if __name__ == "__main__":
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
